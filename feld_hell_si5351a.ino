@@ -4,6 +4,7 @@
 Si5351 si5351;
 long freq = 14000000;
 int ledPin = 13;
+volatile bool proceed = false;
 
 typedef struct glyph {
     char ch ;
@@ -60,7 +61,11 @@ Glyph glyphtab[] PROGMEM = {
 } ;
  
 #define NGLYPHS         (sizeof(glyphtab)/sizeof(glyphtab[0]))
- 
+
+ISR(TIMER1_COMPA_vect) {
+    proceed = true;
+}
+
 void encodechar(int ch) {
     int i, x, y, fch;
     word fbits;
@@ -84,7 +89,11 @@ void encodechar(int ch) {
                       digitalWrite(ledPin, LOW);
                     }
                          
-                    delayMicroseconds(3260L);
+                    while(!proceed)
+                      ;
+                    noInterrupts();
+                    proceed = false;
+                    interrupts();
                 }
             }
         }
@@ -100,7 +109,7 @@ void setup() {
     Serial.begin(9600);
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LOW);
-    
+        
     // Initialize the Si5351
     // Change the 2nd parameter in init if using a ref osc other
     // than 25 MHz
@@ -110,6 +119,17 @@ void setup() {
     si5351.set_correction(0);
     si5351.set_freq(freq * 100, 0, SI5351_CLK0);
     si5351.output_enable(SI5351_CLK0, 0); // Disable the clock initially
+    
+    // Set up Timer1 for interrupts at 245 Hz
+    cli(); //stop interrupts
+    TCCR1A = 0;// set entire TCCR1A register to 0
+    TCNT1  = 0;//initialize counter value to 0
+    TCCR1B = (1<<CS10);
+    // enable timer compare interrupt
+    TIMSK1 = (1 << OCIE1A);
+    // 16MHz clock / 0xFF1A counts == 245.00045938Hz
+    OCR1A = 0xFF1A;
+    sei(); //allow interrupts
 }
  
 void loop() {
