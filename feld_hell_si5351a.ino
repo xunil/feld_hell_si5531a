@@ -77,14 +77,14 @@ void encodechar(int ch) {
                 fbits = pgm_read_word(&(glyphtab[i].col[x]));
                 for (y=0; y<14; y++) {
                     if (fbits & (1<<y)) {
-                      si5351.clock_enable(SI5351_CLK0, 1);
+                      si5351.output_enable(SI5351_CLK0, 1);
                       digitalWrite(ledPin, HIGH);
                     } else {
-                      si5351.clock_enable(SI5351_CLK0, 0);
+                      si5351.output_enable(SI5351_CLK0, 0);
                       digitalWrite(ledPin, LOW);
                     }
                          
-                    delayMicroseconds(4045L);
+                    delayMicroseconds(3260L);
                 }
             }
         }
@@ -104,26 +104,16 @@ void setup() {
     // Initialize the Si5351
     // Change the 2nd parameter in init if using a ref osc other
     // than 25 MHz
-    si5351.init(SI5351_CRYSTAL_LOAD_8PF);
+    si5351.init(SI5351_CRYSTAL_LOAD_8PF, 0);
   
     // Set CLK0 output to 10.000 000 00 MHz with no correction factor
     si5351.set_correction(0);
     si5351.set_freq(freq * 100, 0, SI5351_CLK0);
-    si5351.clock_enable(SI5351_CLK0, 0); // Disable the clock initially
+    si5351.output_enable(SI5351_CLK0, 0); // Disable the clock initially
 }
  
 void loop() {
-    encode("K6HX QTH CM87UX TMP 72F PWR 500 MICROWATTS ") ;
-    si5351.update_status();
-    Serial.print("SYS_INIT: ");
-    Serial.print(si5351.dev_status.SYS_INIT);
-    Serial.print("  LOL_A: ");
-    Serial.print(si5351.dev_status.LOL_A);
-    Serial.print("  LOL_B: ");
-    Serial.print(si5351.dev_status.LOL_B);
-    Serial.print("  LOS: ");
-    Serial.print(si5351.dev_status.LOS);
-    Serial.print("  REVID: ");
-    Serial.println(si5351.dev_status.REVID);
+    encode("AK6L QTH CM87UU ");
+    delay(1000);
 }
 
