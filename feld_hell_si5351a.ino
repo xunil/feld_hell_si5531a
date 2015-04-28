@@ -32,16 +32,25 @@
 #include <si5351.h>
 #include "Wire.h"
 
+// Define some variables.
 Si5351 si5351;
 long freq = 14063000;
 int ledPin = 13;
+// This variable must be defined 'volatile' to avoid some compiler
+// optimizations, which would render the interrupt timing useless.
 volatile bool proceed = false;
 
+// Define the structure of a glyph
 typedef struct glyph {
     char ch ;
     word col[7] ;
 } Glyph ;
  
+// Build the Feld Hell "font".  This is declared PROGMEM to save
+// memory on the Arduino; this data will be stored in program
+// flash instead of loaded in memory.  This makes accesses slower
+// and more complicated, but this is a small price to pay for the
+// memory savings.
 Glyph glyphtab[] PROGMEM = {
   {' ', {0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000}},
   {'A', {0x07fc, 0x0e60, 0x0c60, 0x0e60, 0x07fc, 0x0000, 0x0000}},
@@ -91,12 +100,21 @@ Glyph glyphtab[] PROGMEM = {
   {'/', {0x001c, 0x0070, 0x01c0, 0x0700, 0x1c00, 0x0000, 0x0000}},
 } ;
  
+// Define an upper bound on the number of glyphs.  Defining it this
+// way allows adding characters without having to update a hard-coded
+// upper bound.
 #define NGLYPHS         (sizeof(glyphtab)/sizeof(glyphtab[0]))
 
+// Timer interrupt vector.  This toggles the variable we use to gate
+// each column of output to ensure accurate timing.  Called whenever
+// Timer1 hits the count set below in setup().
 ISR(TIMER1_COMPA_vect) {
     proceed = true;
 }
 
+// This is the heart of the beacon.  Given a character, it finds the
+// appropriate glyph and toggles output from the Si5351a to key the
+// Feld Hell signal.
 void encodechar(int ch) {
     int i, x, y, fch;
     word fbits;
