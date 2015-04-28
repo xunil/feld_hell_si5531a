@@ -1,6 +1,6 @@
 //
 // Simple Feld Hell beacon for Arduino, with the Etherkit Si5351a breakout
-// board.
+// board, by Jason Milldrum NT7S.
 // 
 // Original Feld Hell code for Arduino by Mark Vandewettering K6HX, adapted
 // for the Si5351a by Robert Liesenfeld AK6L <ak6l@ak6l.org>.  Timer setup
